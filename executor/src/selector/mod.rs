@@ -2,6 +2,7 @@ use crate::state::Selector;
 use anyhow::{bail, Result};
 
 /// Supported control types for selector matching
+#[allow(dead_code)]
 const VALID_CONTROL_TYPES: &[&str] = &[
     "Button", "Edit", "CheckBox", "ComboBox", "List", "ListItem", "Tree", "TreeItem", "Menu",
     "MenuItem", "Tab", "TabItem", "Text", "Image", "Window",
@@ -18,6 +19,7 @@ const VALID_CONTROL_TYPES: &[&str] = &[
 /// parse(r#"automation_id="btn_submit""#)
 /// parse(r#"control_type="Edit" index=0"#)
 /// ```
+#[allow(dead_code)]
 pub fn parse(input: &str) -> Result<Selector> {
     let input = input.trim();
 
@@ -33,7 +35,7 @@ pub fn parse(input: &str) -> Result<Selector> {
 
     while chars.peek().is_some() {
         // Skip whitespace
-        while chars.peek().map_or(false, |c| c.is_whitespace()) {
+        while chars.peek().is_some_and(|c| c.is_whitespace()) {
             chars.next();
         }
 
@@ -89,6 +91,7 @@ pub fn parse(input: &str) -> Result<Selector> {
     Ok(selector)
 }
 
+#[allow(dead_code)]
 fn parse_value(chars: &mut std::iter::Peekable<std::str::Chars>) -> Result<String> {
     // Check if value is quoted
     if chars.peek() == Some(&'"') {
@@ -121,6 +124,7 @@ fn parse_value(chars: &mut std::iter::Peekable<std::str::Chars>) -> Result<Strin
     }
 }
 
+#[allow(dead_code)]
 fn validate_control_type(value: &str) -> Result<()> {
     if !VALID_CONTROL_TYPES.contains(&value) {
         bail!(
