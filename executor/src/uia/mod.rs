@@ -791,19 +791,19 @@ fn scroll_element_impl(
             .map_err(|_| anyhow::anyhow!("element does not support ScrollPattern"))?;
 
         let h_scroll = match horizontal {
-            ScrollAmount::LargeDecrement => WindowsScrollAmount::ScrollAmount_LargeDecrement,
-            ScrollAmount::SmallDecrement => WindowsScrollAmount::ScrollAmount_SmallDecrement,
-            ScrollAmount::NoAmount => WindowsScrollAmount::ScrollAmount_NoAmount,
-            ScrollAmount::LargeIncrement => WindowsScrollAmount::ScrollAmount_LargeIncrement,
-            ScrollAmount::SmallIncrement => WindowsScrollAmount::ScrollAmount_SmallIncrement,
+            ScrollAmount::LargeDecrement => WindowsScrollAmount::LargeDecrement,
+            ScrollAmount::SmallDecrement => WindowsScrollAmount::SmallDecrement,
+            ScrollAmount::NoAmount => WindowsScrollAmount::NoAmount,
+            ScrollAmount::LargeIncrement => WindowsScrollAmount::LargeIncrement,
+            ScrollAmount::SmallIncrement => WindowsScrollAmount::SmallIncrement,
         };
 
         let v_scroll = match vertical {
-            ScrollAmount::LargeDecrement => WindowsScrollAmount::ScrollAmount_LargeDecrement,
-            ScrollAmount::SmallDecrement => WindowsScrollAmount::ScrollAmount_SmallDecrement,
-            ScrollAmount::NoAmount => WindowsScrollAmount::ScrollAmount_NoAmount,
-            ScrollAmount::LargeIncrement => WindowsScrollAmount::ScrollAmount_LargeIncrement,
-            ScrollAmount::SmallIncrement => WindowsScrollAmount::ScrollAmount_SmallIncrement,
+            ScrollAmount::LargeDecrement => WindowsScrollAmount::LargeDecrement,
+            ScrollAmount::SmallDecrement => WindowsScrollAmount::SmallDecrement,
+            ScrollAmount::NoAmount => WindowsScrollAmount::NoAmount,
+            ScrollAmount::LargeIncrement => WindowsScrollAmount::LargeIncrement,
+            ScrollAmount::SmallIncrement => WindowsScrollAmount::SmallIncrement,
         };
 
         pattern.Scroll(h_scroll, v_scroll)?;
