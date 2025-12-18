@@ -1,3 +1,5 @@
+#![cfg(target_os = "windows")]
+
 use crate::state::{MatchedElement, Selector, UIElement};
 use anyhow::{bail, Result};
 
@@ -367,17 +369,17 @@ pub fn set_element_value(found: &FoundElement, value: &str) -> Result<()> {
 
 #[cfg(target_os = "windows")]
 fn set_element_value_impl(found: &FoundElement, value: &str) -> Result<()> {
-    use windows::core::HSTRING;
+    use windows::core::BSTR;
     use windows::Win32::UI::Accessibility::{IUIAutomationValuePattern, UIA_ValuePatternId};
 
     unsafe {
-        let pattern: IUIAutomationValuePattern = found
+        let pattern = found
             .inner
-            .GetCurrentPatternAs(UIA_ValuePatternId)
+            .GetCurrentPatternAs::<IUIAutomationValuePattern>(UIA_ValuePatternId)
             .map_err(|_| anyhow::anyhow!("element does not support ValuePattern"))?;
 
-        let hvalue = HSTRING::from(value);
-        pattern.SetValue(&hvalue)?;
+        let bstr = BSTR::from(value);
+        pattern.SetValue(&bstr)?;
         Ok(())
     }
 }
@@ -406,18 +408,22 @@ fn click_element_impl(found: &FoundElement) -> Result<()> {
 
     unsafe {
         // First try InvokePattern (most common for buttons)
-        if let Ok(invoke_pattern) = found.inner.GetCurrentPatternAs(UIA_InvokePatternId) {
-            invoke_pattern.Invoke()?;
+        if let Ok(invoke) = found
+            .inner
+            .GetCurrentPatternAs::<IUIAutomationInvokePattern>(UIA_InvokePatternId)
+        {
+            invoke.Invoke()?;
             return Ok(());
         }
 
         // Fallback to LegacyIAccessible pattern
-        if let Ok(legacy_pattern) = found
+        if let Ok(legacy) = found
             .inner
-            .GetCurrentPatternAs(UIA_LegacyIAccessiblePatternId)
+            .GetCurrentPatternAs::<IUIAutomationLegacyIAccessiblePattern>(
+                UIA_LegacyIAccessiblePatternId,
+            )
         {
-            let pattern: IUIAutomationLegacyIAccessiblePattern = legacy_pattern;
-            pattern.DoDefaultAction()?;
+            legacy.DoDefaultAction()?;
             return Ok(());
         }
 
@@ -511,9 +517,11 @@ pub fn is_element_visible(found: &FoundElement) -> Result<bool> {
 
 #[cfg(target_os = "windows")]
 fn is_element_visible_impl(found: &FoundElement) -> Result<bool> {
+    use windows::Win32::Foundation::BOOL;
+
     unsafe {
         let is_offscreen = found.inner.CurrentIsOffscreen()?;
-        Ok(!is_offscreen.into())
+        Ok(is_offscreen == BOOL(0))
     }
 }
 
@@ -582,22 +590,21 @@ pub enum ToggleState {
 #[cfg(target_os = "windows")]
 fn toggle_element_impl(found: &FoundElement) -> Result<ToggleState> {
     use windows::Win32::UI::Accessibility::{
-        IUIAutomationTogglePattern, ToggleState as WindowsToggleState, UIA_TogglePatternId,
+        IUIAutomationTogglePattern, ToggleState as WinToggleState, UIA_TogglePatternId,
     };
 
     unsafe {
-        let pattern: IUIAutomationTogglePattern = found
+        let pattern = found
             .inner
-            .GetCurrentPatternAs(UIA_TogglePatternId)
+            .GetCurrentPatternAs::<IUIAutomationTogglePattern>(UIA_TogglePatternId)
             .map_err(|_| anyhow::anyhow!("element does not support TogglePattern"))?;
 
         pattern.Toggle()?;
 
-        let state = pattern.CurrentToggleState()?;
-        match state {
-            WindowsToggleState::ToggleState_Off => Ok(ToggleState::Off),
-            WindowsToggleState::ToggleState_On => Ok(ToggleState::On),
-            WindowsToggleState::ToggleState_Indeterminate => Ok(ToggleState::Indeterminate),
+        match pattern.CurrentToggleState()? {
+            WinToggleState::Off => Ok(ToggleState::Off),
+            WinToggleState::On => Ok(ToggleState::On),
+            WinToggleState::Indeterminate => Ok(ToggleState::Indeterminate),
             _ => bail!("unknown toggle state"),
         }
     }
@@ -791,19 +798,19 @@ fn scroll_element_impl(
             .map_err(|_| anyhow::anyhow!("element does not support ScrollPattern"))?;
 
         let h_scroll = match horizontal {
-            ScrollAmount::LargeDecrement => WindowsScrollAmount::ScrollAmount_LargeDecrement,
-            ScrollAmount::SmallDecrement => WindowsScrollAmount::ScrollAmount_SmallDecrement,
-            ScrollAmount::NoAmount => WindowsScrollAmount::ScrollAmount_NoAmount,
-            ScrollAmount::LargeIncrement => WindowsScrollAmount::ScrollAmount_LargeIncrement,
-            ScrollAmount::SmallIncrement => WindowsScrollAmount::ScrollAmount_SmallIncrement,
+            ScrollAmount::LargeDecrement => WindowsScrollAmount::ScrollAmountLargeDecrement,
+            ScrollAmount::SmallDecrement => WindowsScrollAmount::ScrollAmountSmallDecrement,
+            ScrollAmount::NoAmount => WindowsScrollAmount::ScrollAmountNoAmount,
+            ScrollAmount::LargeIncrement => WindowsScrollAmount::ScrollAmountLargeIncrement,
+            ScrollAmount::SmallIncrement => WindowsScrollAmount::ScrollAmountSmallIncrement,
         };
 
         let v_scroll = match vertical {
-            ScrollAmount::LargeDecrement => WindowsScrollAmount::ScrollAmount_LargeDecrement,
-            ScrollAmount::SmallDecrement => WindowsScrollAmount::ScrollAmount_SmallDecrement,
-            ScrollAmount::NoAmount => WindowsScrollAmount::ScrollAmount_NoAmount,
-            ScrollAmount::LargeIncrement => WindowsScrollAmount::ScrollAmount_LargeIncrement,
-            ScrollAmount::SmallIncrement => WindowsScrollAmount::ScrollAmount_SmallIncrement,
+            ScrollAmount::LargeDecrement => WindowsScrollAmount::ScrollAmountLargeDecrement,
+            ScrollAmount::SmallDecrement => WindowsScrollAmount::ScrollAmountSmallDecrement,
+            ScrollAmount::NoAmount => WindowsScrollAmount::ScrollAmountNoAmount,
+            ScrollAmount::LargeIncrement => WindowsScrollAmount::ScrollAmountLargeIncrement,
+            ScrollAmount::SmallIncrement => WindowsScrollAmount::ScrollAmountSmallIncrement,
         };
 
         pattern.Scroll(h_scroll, v_scroll)?;
@@ -844,9 +851,9 @@ fn get_range_value_impl(found: &FoundElement) -> Result<RangeValueInfo> {
     };
 
     unsafe {
-        let pattern: IUIAutomationRangeValuePattern = found
+        let pattern = found
             .inner
-            .GetCurrentPatternAs(UIA_RangeValuePatternId)
+            .GetCurrentPatternAs::<IUIAutomationRangeValuePattern>(UIA_RangeValuePatternId)
             .map_err(|_| anyhow::anyhow!("element does not support RangeValuePattern"))?;
 
         Ok(RangeValueInfo {
@@ -881,9 +888,9 @@ fn set_range_value_impl(found: &FoundElement, value: f64) -> Result<()> {
     };
 
     unsafe {
-        let pattern: IUIAutomationRangeValuePattern = found
+        let pattern = found
             .inner
-            .GetCurrentPatternAs(UIA_RangeValuePatternId)
+            .GetCurrentPatternAs::<IUIAutomationRangeValuePattern>(UIA_RangeValuePatternId)
             .map_err(|_| anyhow::anyhow!("element does not support RangeValuePattern"))?;
 
         pattern.SetValue(value)?;
