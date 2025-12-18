@@ -1,3 +1,4 @@
+mod selector;
 mod state;
 mod uia;
 mod win32;
