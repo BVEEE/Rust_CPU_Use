@@ -1,5 +1,5 @@
-use anyhow::Result;
 use crate::state::UIElement;
+use anyhow::Result;
 
 /// Initialize COM for UI Automation
 pub fn initialize_com() -> Result<()> {
@@ -52,14 +52,16 @@ pub fn capture_ui_tree(window_handle: u64, max_depth: usize) -> Result<Option<UI
 
 #[cfg(target_os = "windows")]
 fn capture_ui_tree_impl(window_handle: u64, max_depth: usize) -> Result<Option<UIElement>> {
-    use windows::Win32::Foundation::HWND;
-    use windows::Win32::UI::Accessibility::{CUIAutomation, IUIAutomation, UIA_ControlTypePropertyId, UIA_AutomationIdPropertyId, UIA_NamePropertyId};
     use windows::core::BSTR;
+    use windows::Win32::Foundation::HWND;
+    use windows::Win32::UI::Accessibility::{
+        CUIAutomation, IUIAutomation, UIA_AutomationIdPropertyId, UIA_ControlTypePropertyId,
+        UIA_NamePropertyId,
+    };
 
     unsafe {
-        let automation: IUIAutomation = windows::core::ComInterface::cast(
-            &windows::core::factory::<_, CUIAutomation>()?
-        )?;
+        let automation: IUIAutomation =
+            windows::core::ComInterface::cast(&windows::core::factory::<_, CUIAutomation>()?)?;
 
         let hwnd = HWND(window_handle as isize);
         let element = automation.ElementFromHandle(hwnd)?;
@@ -76,8 +78,10 @@ unsafe fn traverse_element(
     current_depth: usize,
     max_depth: usize,
 ) -> Result<UIElement> {
-    use windows::Win32::UI::Accessibility::{UIA_ControlTypePropertyId, UIA_AutomationIdPropertyId, UIA_NamePropertyId};
     use windows::core::BSTR;
+    use windows::Win32::UI::Accessibility::{
+        UIA_AutomationIdPropertyId, UIA_ControlTypePropertyId, UIA_NamePropertyId,
+    };
 
     let name = element.CurrentName()?.to_string();
     let automation_id = element.CurrentAutomationId()?.to_string();
@@ -95,7 +99,9 @@ unsafe fn traverse_element(
             let mut current_child = Some(child);
 
             while let Some(child_elem) = current_child {
-                if let Ok(child_ui) = traverse_element(automation, &child_elem, current_depth + 1, max_depth) {
+                if let Ok(child_ui) =
+                    traverse_element(automation, &child_elem, current_depth + 1, max_depth)
+                {
                     children.push(child_ui);
                 }
 

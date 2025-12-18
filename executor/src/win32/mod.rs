@@ -1,5 +1,5 @@
-use anyhow::Result;
 use crate::state::WindowInfo;
+use anyhow::Result;
 
 /// Enumerate all visible top-level windows
 pub fn enumerate_windows() -> Result<Vec<WindowInfo>> {
@@ -22,7 +22,10 @@ fn enumerate_windows_impl() -> Result<Vec<WindowInfo>> {
 
     let mut windows = Vec::new();
 
-    unsafe extern "system" fn enum_proc(hwnd: HWND, lparam: LPARAM) -> windows::Win32::Foundation::BOOL {
+    unsafe extern "system" fn enum_proc(
+        hwnd: HWND,
+        lparam: LPARAM,
+    ) -> windows::Win32::Foundation::BOOL {
         let windows = &mut *(lparam.0 as *mut Vec<WindowInfo>);
 
         unsafe {
@@ -46,10 +49,7 @@ fn enumerate_windows_impl() -> Result<Vec<WindowInfo>> {
     }
 
     unsafe {
-        EnumWindows(
-            Some(enum_proc),
-            LPARAM(&mut windows as *mut _ as isize),
-        )?;
+        EnumWindows(Some(enum_proc), LPARAM(&mut windows as *mut _ as isize))?;
     }
 
     Ok(windows)
