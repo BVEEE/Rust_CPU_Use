@@ -1065,6 +1065,6 @@ mod tests {
         assert_eq!(info.minimum, 0.0);
         assert_eq!(info.maximum, 200.0);
         assert_eq!(info.step, 2.5);
-        assert_eq!(info.is_read_only, true);
+        assert!(info.is_read_only);
     }
 }
