@@ -27,9 +27,11 @@ pub struct ExecutorOutput {
 
 // ============================================================================
 // v1 Models - Action Execution
+// NOTE: These types are not yet used in main.rs but will be consumed in Phase 5
 // ============================================================================
 
 /// Supported action types for v1
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ActionType {
@@ -39,6 +41,7 @@ pub enum ActionType {
 }
 
 /// Selector criteria for targeting UI elements
+#[allow(dead_code)]
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Selector {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -53,6 +56,7 @@ pub struct Selector {
 
 impl Selector {
     /// Returns true if the selector has no criteria set
+    #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         self.name.is_none()
             && self.automation_id.is_none()
@@ -62,6 +66,7 @@ impl Selector {
 }
 
 /// Action request received via stdin (v1)
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActionRequest {
     pub action: ActionType,
@@ -71,6 +76,7 @@ pub struct ActionRequest {
 }
 
 /// Information about the matched element (included in success responses)
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MatchedElement {
     pub name: String,
@@ -79,6 +85,7 @@ pub struct MatchedElement {
 }
 
 /// Action result returned via stdout (v1)
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActionResult {
     pub success: bool,
@@ -90,6 +97,7 @@ pub struct ActionResult {
 
 impl ActionResult {
     /// Create a successful result with element info
+    #[allow(dead_code)]
     pub fn success(element: MatchedElement) -> Self {
         Self {
             success: true,
@@ -99,6 +107,7 @@ impl ActionResult {
     }
 
     /// Create a failure result with error message
+    #[allow(dead_code)]
     pub fn failure(error: impl Into<String>) -> Self {
         Self {
             success: false,
