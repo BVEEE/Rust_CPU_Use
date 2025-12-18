@@ -66,7 +66,7 @@ mod tests {
 
     #[test]
     fn test_max_ui_depth_is_reasonable() {
-        assert!(MAX_UI_DEPTH > 0);
-        assert!(MAX_UI_DEPTH < 100);
+        const { assert!(MAX_UI_DEPTH > 0) };
+        const { assert!(MAX_UI_DEPTH < 100) };
     }
 }

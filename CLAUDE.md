@@ -1,3 +1,4 @@
+
 # CLAUDE.md — Autonomous Windows Executor
 
 ## AUTHORITY
@@ -22,8 +23,9 @@ Violations require immediate rollback and correction.
 2. Run: `git log --oneline -10`
 3. Run: `cargo check`
 4. State current milestone position
-5. State next task
-6. Proceed only after stating position
+5. State completed tasks
+6. State next task
+7. Proceed only after stating position
 
 ### Between Sessions:
 - Assume no context carries over
@@ -50,13 +52,14 @@ Violations require immediate rollback and correction.
 
 ## GIT WORKFLOW
 
-- Work on `main` unless instructed otherwise
-- Commit after each logical unit passes CI
+- Branch protection is ENABLED on main
+- All changes go through pull requests
+- Branch naming: `v1/<phase>-<description>` or `fix/<issue>`
 - Commit format: `[module] brief description`
-- Push immediately after commit
+- Merge when CI green (squash preferred)
 - Never force push
 - Never rebase without instruction
-- Never delete branches without instruction
+- Delete branches after merge
 
 ---
 
@@ -68,7 +71,7 @@ Configuration:
 - `windows-latest` runner only
 - Triggers: push, pull_request
 - Pipeline (in order, fail-fast):
-  1. `cargo fmt --check`
+  1. `cargo fmt --check --all`
   2. `cargo clippy -- -D warnings`
   3. `cargo test`
   4. `cargo build --release`
@@ -97,31 +100,75 @@ Never guess. Never work around.
 
 ---
 
-## v0 MILESTONE — CURRENT
+## v0 MILESTONE — COMPLETE (LOCKED)
 
-Build Windows Executor that:
+Status: **COMPLETE**
+
+v0 delivered:
 1. Compiles cleanly on Windows via CI
 2. Enumerates visible top-level windows
 3. Detects focused window
 4. Initializes UI Automation (COM + CUIAutomation)
-5. Captures depth-limited UI Automation snapshot of focused window
+5. Captures depth-limited UI Automation snapshot
 6. Outputs structured JSON to stdout
 
-This milestone is observation-only.
+v0 is observation-only and LOCKED.
 
 ---
 
-## SCOPE LOCK (FORBIDDEN IN v0)
+## v0 SCOPE LOCK (PERMANENT)
 
-- No Brain, no networking, no IPC
-- No selector parsing
-- No input simulation (click, type)
-- No screenshots, no vision
-- No policy engine
-- No services or installers
-- No browser-specific logic
+These remain FORBIDDEN and may not be added retroactively to v0:
 
-Violations require immediate rollback.
+- Networking, IPC, or hosting
+- Input simulation
+- Screenshots or vision
+- Policy engines
+- Background services
+- Browser-specific logic
+
+---
+
+## v1 MILESTONE — CURRENT
+
+Status: **IN PROGRESS**
+
+v1 Goal: ACTION EXECUTION via UI Automation patterns
+
+### Confirmed Scope:
+- Selector-based element targeting
+- Actions: click, invoke (alias), set_value
+- UI Automation patterns ONLY:
+  - InvokePattern
+  - LegacyIAccessiblePattern (fallback)
+  - ValuePattern
+- JSON stdin → JSON stdout
+- Single-shot, synchronous execution
+- No retries, no polling, no waits
+
+### CLI Modes:
+- `executor observe` → v0 behavior (LOCKED)
+- `executor act` → v1 behavior (stdin JSON → stdout JSON)
+- Invalid mode → error JSON + exit 1
+
+### Selector Syntax v1:
+- `name="string"`
+- `automation_id="string"`
+- `control_type="Button|Edit|CheckBox|ComboBox|List|ListItem|Tree|TreeItem|Menu|MenuItem|Tab|TabItem|Text|Image|Window"`
+- `index=n` (optional, 0-based)
+- AND-combined
+- Empty or unsupported → HARD FAIL
+
+---
+
+## v1 SCOPE LOCK (FORBIDDEN)
+
+- SendInput or low-level input injection
+- Networking, IPC, HTTP
+- Screenshots or vision
+- Policy engines
+- Background services
+- Browser-specific logic
 
 ---
 
@@ -129,12 +176,16 @@ Violations require immediate rollback.
 executor/
 ├── Cargo.toml
 ├── src/
-│ ├── main.rs # CLI entry, orchestration
-│ ├── win32/ # Window enum, focus detection
+│ ├── main.rs # CLI entry + routing
+│ ├── win32/ # [v0 LOCKED] Window enum + focus
 │ │ └── mod.rs
-│ ├── uia/ # COM init, UI Automation
+│ ├── uia/ # [v0 + v1] COM + traversal + patterns
 │ │ └── mod.rs
-│ └── state/ # Serializable data models only
+│ ├── state/ # [v0 + v1] Serializable models
+│ │ └── mod.rs
+│ ├── selector/ # [v1 NEW] Selector parsing
+│ │ └── mod.rs
+│ └── actions/ # [v1 NEW] Action execution
 │ └── mod.rs
 
 text
@@ -162,6 +213,7 @@ Rules:
 
 - Every public function has at least one test
 - Tests are deterministic
+- OS-conditional tests guarded with `cfg`
 - Integration tests in `tests/`
 - Test names: `test_<function>_<scenario>`
 - Windows API mocking is acceptable
@@ -171,45 +223,62 @@ Rules:
 ## DEVELOPMENT RULES
 
 - Work incrementally
+- One logical unit per commit
 - Each step must pass CI before proceeding
-- Explain design briefly before code
+- Brief design explanation before code
 - Produce complete files only (no snippets)
 - Prefer clarity over cleverness
 - Do not anticipate future milestones
 
 ---
 
-## FIRST TASK (MANDATORY ORDER)
+## AUTONOMY GRANTS (NO PERMISSION NEEDED)
 
-1. Verify/establish CI
-2. Propose repository layout
-3. Provide complete Cargo.toml
-4. Implement win32 module (enum + focus)
-5. Implement uia module (COM + traversal)
-6. Implement state module (models)
-7. Implement main.rs (CLI + JSON output)
-
-Each step must compile and pass CI before proceeding to next.
+- Fix formatting/clippy/compile errors
+- Research windows-rs API independently
+- Create feature branches
+- Open pull requests
+- Merge PRs when CI green (squash)
+- Delete merged branches
+- Retry CI failures up to 3x
 
 ---
 
-## STOP CONDITION
+## FORBIDDEN (ALWAYS ASK)
 
-After v0 completion:
+- Modifying this file (CLAUDE.md)
+- Changing v0 behavior
+- Implementing anything outside current milestone scope
+- Force push
+
+---
+
+## v1 EXECUTION PLAN
+
+Phase 1: [state] v1 ActionRequest/ActionResult models + tests
+Phase 2: [selector] parser + criteria + tests
+Phase 3: [uia] element search + pattern helpers
+Phase 4: [actions] click/invoke/set_value executors
+Phase 5: [main] CLI routing (observe vs act)
+Phase 6: [docs] README v1 usage
+
+---
+
+## STOP CONDITION (v1)
+
+After v1 completion:
 - STOP
-- Do not implement selectors
-- Do not implement execution
-- Do not advance to v1
-- Output: `MILESTONE COMPLETE: v0`
+- Output: `MILESTONE COMPLETE: v1`
+- Do not advance to v2
 - Await explicit instruction
 
 ---
 
 ## PHILOSOPHY
 
-- Executor is stateful and deterministic
+- Executor is deterministic and auditable
 - Intelligence lives outside this binary
-- This process exposes capabilities, not reasoning
+- This project exposes capabilities, not reasoning
 - Every capability is explicit, typed, auditable, CI-validated
 
 This file supersedes all previous instructions.
