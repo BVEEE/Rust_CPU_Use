@@ -1,5 +1,5 @@
-use anyhow::Result;
 use crate::state::WindowInfo;
+use anyhow::Result;
 
 /// Enumerate all visible top-level windows
 pub fn enumerate_windows() -> Result<Vec<WindowInfo>> {
@@ -22,7 +22,10 @@ fn enumerate_windows_impl() -> Result<Vec<WindowInfo>> {
 
     let mut windows = Vec::new();
 
-    unsafe extern "system" fn enum_proc(hwnd: HWND, lparam: LPARAM) -> windows::Win32::Foundation::BOOL {
+    unsafe extern "system" fn enum_proc(
+        hwnd: HWND,
+        lparam: LPARAM,
+    ) -> windows::Win32::Foundation::BOOL {
         let windows = &mut *(lparam.0 as *mut Vec<WindowInfo>);
 
         unsafe {
@@ -33,7 +36,7 @@ fn enumerate_windows_impl() -> Result<Vec<WindowInfo>> {
                 if len > 0 {
                     let title = String::from_utf16_lossy(&text[..len as usize]);
                     windows.push(WindowInfo {
-                        handle: hwnd.0 as u64,
+                        handle: hwnd.0 as usize as u64,
                         title,
                         is_visible: true,
                         is_focused: false, // Will be updated by get_focused_window
@@ -46,10 +49,7 @@ fn enumerate_windows_impl() -> Result<Vec<WindowInfo>> {
     }
 
     unsafe {
-        EnumWindows(
-            Some(enum_proc),
-            LPARAM(&mut windows as *mut _ as isize),
-        )?;
+        EnumWindows(Some(enum_proc), LPARAM(&mut windows as *mut _ as isize))?;
     }
 
     Ok(windows)
@@ -74,10 +74,10 @@ fn get_focused_window_impl() -> Result<Option<u64>> {
 
     unsafe {
         let hwnd = GetForegroundWindow();
-        if hwnd.0 == 0 {
+        if hwnd.0.is_null() {
             Ok(None)
         } else {
-            Ok(Some(hwnd.0 as u64))
+            Ok(Some(hwnd.0 as usize as u64))
         }
     }
 }

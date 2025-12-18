@@ -1,6 +1,6 @@
 mod state;
-mod win32;
 mod uia;
+mod win32;
 
 use anyhow::Result;
 use state::ExecutorOutput;
