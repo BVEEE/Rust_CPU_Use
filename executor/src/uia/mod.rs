@@ -52,16 +52,12 @@ pub fn capture_ui_tree(window_handle: u64, max_depth: usize) -> Result<Option<UI
 
 #[cfg(target_os = "windows")]
 fn capture_ui_tree_impl(window_handle: u64, max_depth: usize) -> Result<Option<UIElement>> {
-    use windows::core::BSTR;
     use windows::Win32::Foundation::HWND;
-    use windows::Win32::UI::Accessibility::{
-        CUIAutomation, IUIAutomation, UIA_AutomationIdPropertyId, UIA_ControlTypePropertyId,
-        UIA_NamePropertyId,
-    };
+    use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_ALL};
+    use windows::Win32::UI::Accessibility::{CUIAutomation, IUIAutomation};
 
     unsafe {
-        let automation: IUIAutomation =
-            windows::core::ComInterface::cast(&windows::core::factory::<_, CUIAutomation>()?)?;
+        let automation: IUIAutomation = CoCreateInstance(&CUIAutomation, None, CLSCTX_ALL)?;
 
         let hwnd = HWND(window_handle as isize);
         let element = automation.ElementFromHandle(hwnd)?;
@@ -78,21 +74,15 @@ unsafe fn traverse_element(
     current_depth: usize,
     max_depth: usize,
 ) -> Result<UIElement> {
-    use windows::core::BSTR;
-    use windows::Win32::UI::Accessibility::{
-        UIA_AutomationIdPropertyId, UIA_ControlTypePropertyId, UIA_NamePropertyId,
-    };
-
     let name = element.CurrentName()?.to_string();
     let automation_id = element.CurrentAutomationId()?.to_string();
 
-    let control_type_variant = element.GetCurrentPropertyValue(UIA_ControlTypePropertyId)?;
-    let control_type = format!("{}", control_type_variant.0);
+    let control_type_id = element.CurrentControlType()?;
+    let control_type = format!("ControlType_{}", control_type_id.0);
 
     let mut children = Vec::new();
 
     if current_depth < max_depth {
-        let condition = automation.CreateTrueCondition()?;
         let walker = automation.ControlViewWalker()?;
 
         if let Ok(child) = walker.GetFirstChildElement(element) {
