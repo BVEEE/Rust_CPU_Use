@@ -1,3 +1,5 @@
+#![cfg(target_os = "windows")]
+
 use crate::state::{MatchedElement, Selector, UIElement};
 use anyhow::{bail, Result};
 

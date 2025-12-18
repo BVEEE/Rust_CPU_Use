@@ -1,8 +1,14 @@
 mod actions;
 mod selector;
 mod state;
-mod uia;
 mod win32;
+
+#[cfg(target_os = "windows")]
+mod uia;
+
+#[cfg(not(target_os = "windows"))]
+#[path = "uia/stub.rs"]
+mod uia;
 
 use anyhow::Result;
 use state::ExecutorOutput;
