@@ -36,7 +36,7 @@ fn enumerate_windows_impl() -> Result<Vec<WindowInfo>> {
                 if len > 0 {
                     let title = String::from_utf16_lossy(&text[..len as usize]);
                     windows.push(WindowInfo {
-                        handle: hwnd.0 as u64,
+                        handle: hwnd.0 as usize as u64,
                         title,
                         is_visible: true,
                         is_focused: false, // Will be updated by get_focused_window
@@ -74,10 +74,10 @@ fn get_focused_window_impl() -> Result<Option<u64>> {
 
     unsafe {
         let hwnd = GetForegroundWindow();
-        if hwnd.0 == 0 {
+        if hwnd.0.is_null() {
             Ok(None)
         } else {
-            Ok(Some(hwnd.0 as u64))
+            Ok(Some(hwnd.0 as usize as u64))
         }
     }
 }

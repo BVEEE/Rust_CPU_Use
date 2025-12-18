@@ -19,7 +19,7 @@ fn initialize_com_impl() -> Result<()> {
     use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
 
     unsafe {
-        CoInitializeEx(None, COINIT_MULTITHREADED)?;
+        CoInitializeEx(None, COINIT_MULTITHREADED).ok()?;
     }
 
     Ok(())
@@ -59,7 +59,7 @@ fn capture_ui_tree_impl(window_handle: u64, max_depth: usize) -> Result<Option<U
     unsafe {
         let automation: IUIAutomation = CoCreateInstance(&CUIAutomation, None, CLSCTX_ALL)?;
 
-        let hwnd = HWND(window_handle as isize);
+        let hwnd = HWND(window_handle as isize as *mut _);
         let element = automation.ElementFromHandle(hwnd)?;
 
         let root = traverse_element(&automation, &element, 0, max_depth)?;
