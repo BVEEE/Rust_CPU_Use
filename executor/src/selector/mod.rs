@@ -3,21 +3,8 @@ use anyhow::{bail, Result};
 
 /// Supported control types for selector matching
 const VALID_CONTROL_TYPES: &[&str] = &[
-    "Button",
-    "Edit",
-    "CheckBox",
-    "ComboBox",
-    "List",
-    "ListItem",
-    "Tree",
-    "TreeItem",
-    "Menu",
-    "MenuItem",
-    "Tab",
-    "TabItem",
-    "Text",
-    "Image",
-    "Window",
+    "Button", "Edit", "CheckBox", "ComboBox", "List", "ListItem", "Tree", "TreeItem", "Menu",
+    "MenuItem", "Tab", "TabItem", "Text", "Image", "Window",
 ];
 
 /// Parse a selector string into a Selector struct.
@@ -124,10 +111,7 @@ fn parse_value(chars: &mut std::iter::Peekable<std::str::Chars>) -> Result<Strin
         bail!("unterminated string in selector");
     } else {
         // Unquoted value (for index)
-        let value: String = chars
-            .by_ref()
-            .take_while(|c| !c.is_whitespace())
-            .collect();
+        let value: String = chars.by_ref().take_while(|c| !c.is_whitespace()).collect();
 
         if value.is_empty() {
             bail!("invalid selector syntax: missing value");
@@ -228,7 +212,10 @@ mod tests {
     fn test_parse_invalid_control_type_fails() {
         let result = parse(r#"control_type="InvalidType""#);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("invalid control_type"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("invalid control_type"));
     }
 
     #[test]
