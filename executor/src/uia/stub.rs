@@ -80,7 +80,10 @@ pub enum ToggleState {
 }
 
 /// Expand or collapse a TreeItem/Menu element (stub)
-pub fn expand_collapse_element(_found: &FoundElement, _expand: bool) -> Result<ExpandCollapseState> {
+pub fn expand_collapse_element(
+    _found: &FoundElement,
+    _expand: bool,
+) -> Result<ExpandCollapseState> {
     bail!("UI Automation not supported on this platform");
 }
 

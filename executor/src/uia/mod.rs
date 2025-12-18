@@ -408,8 +408,9 @@ fn click_element_impl(found: &FoundElement) -> Result<()> {
 
     unsafe {
         // First try InvokePattern (most common for buttons)
-        if let Ok(invoke) =
-            found.inner.GetCurrentPatternAs::<IUIAutomationInvokePattern>(UIA_InvokePatternId)
+        if let Ok(invoke) = found
+            .inner
+            .GetCurrentPatternAs::<IUIAutomationInvokePattern>(UIA_InvokePatternId)
         {
             invoke.Invoke()?;
             return Ok(());
