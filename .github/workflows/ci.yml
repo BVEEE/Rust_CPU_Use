@@ -5,24 +5,64 @@ on:
   pull_request:
 
 jobs:
-  build:
-    runs-on: windows-latest
-
+  lint-test:
+    name: Lint and Test
+    strategy:
+        matrix:
+          os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Check formatting
-        run: cargo fmt --check --all
-
-      - name: Run clippy
-        run: cargo clippy --workspace -- -D warnings
-
-      - name: Run tests
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+          override: true
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: fmt
+        run: cargo fmt --all -- --check
+      - name: clippy
+        run: cargo clippy --all-targets -- -D warnings
+      - name: test
         run: cargo test --workspace
-
-      - name: Build release
+      - name: audit
+        run: cargo install cargo-audit --locked && cargo audit
+      - name: build release
         run: cargo build --workspace --release
+
+  release-artifacts:
+    needs: lint-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: Build archive (linux)
+        run: cargo build --release -p cpu-use
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpu-use-linux
+          path: target/release/cpu-use
+
+  coverage:
+    name: Coverage (tarpaulin)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: Install tarpaulin
+        run: cargo install cargo-tarpaulin --locked
+      - name: Coverage
+        run: cargo tarpaulin --workspace --timeout 120 --fail-under 80

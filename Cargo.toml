@@ -1,3 +1,16 @@
 [workspace]
 members = ["executor"]
 resolver = "2"
+
+[workspace.package]
+name = "cpu-use"
+version = "1.0.0"
+edition = "2021"
+description = "A Rust CLI tool for CPU usage monitoring and automation using selectors and UI helpers"
+license = "MIT OR Apache-2.0"
+repository = "https://example.com/your/repo"
+keywords = ["cpu", "cli", "automation", "windows", "uia"]
+categories = ["command-line-utilities", "development-tools"]
+authors = ["Rust CPU Use Maintainers"]
+homepage = "https://example.com/your/repo"
+documentation = "https://example.com/your/repo/docs"

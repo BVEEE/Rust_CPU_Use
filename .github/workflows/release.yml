@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-release:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os: macos-latest
+            target: x86_64-apple-darwin
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --release -p cpu-use --target ${{ matrix.target }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpu-use-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/*cpu-use*
+
+  publish:
+    needs: build-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            cpu-use-*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
