@@ -1,18 +1,42 @@
 [package]
-name = "executor"
-version = "0.1.0"
+name = "cpu-use"
+version = "1.0.0"
 edition = "2021"
+authors = ["Rust CPU Use Maintainers"]
+description = "Production-ready Rust CLI for CPU usage monitoring and UI automation"
+license = "MIT OR Apache-2.0"
+repository = "https://example.com/your/repo"
+homepage = "https://example.com/your/repo"
+documentation = "https://example.com/your/repo/docs"
+categories = ["command-line-utilities", "development-tools"]
+keywords = ["cpu", "cli", "automation", "windows", "uia"]
+
+[[bin]]
+name = "cpu-use"
+path = "src/main.rs"
 
 [dependencies]
-anyhow = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+anyhow = "1.0.86"
+clap = { version = "4.5.10", features = ["derive", "env"] }
+config = { version = "0.14.0", default-features = false, features = ["toml"] }
+env_logger = "0.11.3"
+log = "0.4.21"
+ctrlc = "3.4.4"
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = "1.0.117"
+sysinfo = { version = "0.30.12", features = ["serde", "macros"] }
+thiserror = "1.0.61"
+ratatui = { version = "0.26.3", default-features = false, features = ["crossterm", "macros"] }
+crossterm = "0.27.0"
 
-[dependencies.windows]
-version = "0.58"
-features = [
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58.0", features = [
     "Win32_Foundation",
     "Win32_System_Com",
     "Win32_UI_Accessibility",
     "Win32_UI_WindowsAndMessaging",
-]
+] }
+
+[dev-dependencies]
+criterion = { version = "0.5.1", default-features = false, features = ["html_reports"] }
+serde_json = "1.0.117"

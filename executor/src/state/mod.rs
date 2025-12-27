@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Represents a window in the system
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct WindowInfo {
     pub handle: u64,
     pub title: String,
@@ -10,7 +10,7 @@ pub struct WindowInfo {
 }
 
 /// Represents a UI Automation element
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct UIElement {
     pub name: String,
     pub control_type: String,
@@ -19,7 +19,7 @@ pub struct UIElement {
 }
 
 /// Root output structure for observe mode (v0)
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct ExecutorOutput {
     pub windows: Vec<WindowInfo>,
     pub focused_window_ui: Option<UIElement>,
@@ -63,11 +63,19 @@ impl Selector {
             && self.control_type.is_none()
             && self.index.is_none()
     }
+
+    /// Validate the selector contains at least one field
+    pub fn validate(&self) -> anyhow::Result<()> {
+        if self.is_empty() {
+            anyhow::bail!("selector must contain at least one predicate");
+        }
+        Ok(())
+    }
 }
 
 /// Action request received via stdin (v1)
 #[allow(dead_code)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ActionRequest {
     pub action: ActionType,
     pub selector: Selector,
@@ -75,9 +83,20 @@ pub struct ActionRequest {
     pub value: Option<String>,
 }
 
+impl ActionRequest {
+    /// Validate the request is internally consistent
+    pub fn validate(&self) -> anyhow::Result<()> {
+        self.selector.validate()?;
+        if matches!(self.action, ActionType::SetValue) && self.value.is_none() {
+            anyhow::bail!("set_value action requires a value field");
+        }
+        Ok(())
+    }
+}
+
 /// Information about the matched element (included in success responses)
 #[allow(dead_code)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct MatchedElement {
     pub name: String,
     pub control_type: String,
@@ -86,7 +105,7 @@ pub struct MatchedElement {
 
 /// Action result returned via stdout (v1)
 #[allow(dead_code)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ActionResult {
     pub success: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -321,6 +340,25 @@ mod tests {
         assert!(json.contains("\"success\":false"));
         assert!(json.contains("\"Pattern not supported\""));
         assert!(!json.contains("\"element\""));
+    }
+
+    #[test]
+    fn selector_validation_rejects_empty() {
+        let selector = Selector::default();
+        assert!(selector.validate().is_err());
+    }
+
+    #[test]
+    fn action_request_validation_requires_value_for_set() {
+        let request = ActionRequest {
+            action: ActionType::SetValue,
+            selector: Selector {
+                name: Some("Name".into()),
+                ..Default::default()
+            },
+            value: None,
+        };
+        assert!(request.validate().is_err());
     }
 
     #[test]
