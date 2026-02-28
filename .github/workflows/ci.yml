@@ -46,7 +46,7 @@ jobs:
       - name: Build archive (linux)
         run: cargo build --release -p cpu-use
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cpu-use-linux
           path: target/release/cpu-use
